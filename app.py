@@ -5,67 +5,47 @@ import numpy as np
 from pathlib import Path
 from sklearn.base import BaseEstimator, TransformerMixin
 import sys
-
+st.set_page_config(page_title="House Price Predictor", page_icon="🏡", layout="centered")
 class OutlierCapper(BaseEstimator, TransformerMixin):
-
     def __init__(self, method='iqr', factor=1.5):
         self.method = method
         self.factor = factor
         self.lower_bounds_ = {}
         self.upper_bounds_ = {}
-
     def fit(self, X, y=None):
         X_df = pd.DataFrame(X)
-
         self.lower_bounds_ = {}
         self.upper_bounds_ = {}
-
         for col in X_df.columns:
-
-            if self.method == 'iqr':
-
+           if self.method == 'iqr':
                 q25 = X_df[col].quantile(0.25)
                 q75 = X_df[col].quantile(0.75)
-
                 iqr = q75 - q25
-
                 self.lower_bounds_[col] = (
                     q25 - self.factor * iqr
                 )
-
                 self.upper_bounds_[col] = (
                     q75 + self.factor * iqr
                 )
-
             elif self.method == 'zscore':
-
                 mean = X_df[col].mean()
                 std = X_df[col].std()
-
                 self.lower_bounds_[col] = (
                     mean - self.factor * std
                 )
-
                 self.upper_bounds_[col] = (
                     mean + self.factor * std
                 )
-
         return self
-
     def transform(self, X):
-
         X_df = pd.DataFrame(X).copy()
-
         for col in X_df.columns:
-
             if col in self.lower_bounds_:
-
                 X_df[col] = np.clip(
                     X_df[col],
                     self.lower_bounds_[col],
                     self.upper_bounds_[col]
                 )
-
         return X_df.values
 
 setattr(
@@ -85,46 +65,13 @@ def load_pipeline():
 model = load_pipeline()
 
 
-# class SelectiveOutlierCapper(BaseEstimator, TransformerMixin):
-#     def __init__(self, factor=1.5, target_columns=None):
-#         self.factor = factor
-#         self.target_columns = target_columns
-#         self.bounds_ = {}
 
-#     def fit(self, X, y=None):
-#         return self
-
-#     def transform(self, X):
-#         X_df = pd.DataFrame(X).copy()
-#         for col, (lower_limit, upper_limit) in self.bounds_.items():
-#             if col in X_df.columns:
-#                 X_df[col] = np.clip(X_df[col], lower_limit, upper_limit)
-#         return X_df.values
-
-
-# OutlierCapper = SelectiveOutlierCapper
-
-# # Bind explicitly to __main__ so pickle find_class can always locate it
-# setattr(sys.modules['__main__'], 'SelectiveOutlierCapper', SelectiveOutlierCapper)
-# setattr(sys.modules['__main__'], 'OutlierCapper', OutlierCapper)
-
-
-# # 2. LOAD MODEL PIPELINE
-
-# @st.cache_resource
-# def load_pipeline():
-#     model_path = Path(__file__).parent / "house_price_champion_pipeline.pkl"
-#     if not model_path.exists():
-#         model_path = Path.cwd() / "house_price_champion_pipeline.pkl"
-#     return joblib.load(model_path)
-
-# model = load_pipeline()
 
 
 # ==============================================================================
 # 3. STREAMLIT UI
 # ==============================================================================
-st.set_page_config(page_title="House Price Predictor", page_icon="🏡", layout="centered")
+
 
 st.title("🏡 House Price Prediction")
 st.write("Enter the property details below to estimate the market value.")
