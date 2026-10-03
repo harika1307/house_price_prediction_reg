@@ -4,10 +4,9 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from sklearn.base import BaseEstimator, TransformerMixin
+import sys
 
-# ==============================================================================
-# 1. DEFINE CUSTOM TRANSFORMER (Required by joblib to load the pipeline)
-# ==============================================================================
+
 class SelectiveOutlierCapper(BaseEstimator, TransformerMixin):
     def __init__(self, factor=1.5, target_columns=None):
         self.factor = factor
@@ -24,15 +23,25 @@ class SelectiveOutlierCapper(BaseEstimator, TransformerMixin):
                 X_df[col] = np.clip(X_df[col], lower_limit, upper_limit)
         return X_df.values
 
-# ==============================================================================
+
+OutlierCapper = SelectiveOutlierCapper
+
+# Bind explicitly to __main__ so pickle find_class can always locate it
+setattr(sys.modules['__main__'], 'SelectiveOutlierCapper', SelectiveOutlierCapper)
+setattr(sys.modules['__main__'], 'OutlierCapper', OutlierCapper)
+
+
 # 2. LOAD MODEL PIPELINE
-# ==============================================================================
+
 @st.cache_resource
 def load_pipeline():
-    model_path = Path.cwd() / "house_price_champion_pipeline.pkl"
+    model_path = Path(__file__).parent / "house_price_champion_pipeline.pkl"
+    if not model_path.exists():
+        model_path = Path.cwd() / "house_price_champion_pipeline.pkl"
     return joblib.load(model_path)
 
 model = load_pipeline()
+
 
 # ==============================================================================
 # 3. STREAMLIT UI
