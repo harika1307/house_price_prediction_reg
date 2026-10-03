@@ -6,33 +6,68 @@ from pathlib import Path
 from sklearn.base import BaseEstimator, TransformerMixin
 import sys
 
-class SelectiveOutlierCapper(BaseEstimator, TransformerMixin):
-    def __init__(self, factor=1.5, target_columns=None):
+class OutlierCapper(BaseEstimator, TransformerMixin):
+
+    def __init__(self, method='iqr', factor=1.5):
+        self.method = method
         self.factor = factor
-        self.target_columns = target_columns
-        self.bounds_ = {}
+        self.lower_bounds_ = {}
+        self.upper_bounds_ = {}
 
     def fit(self, X, y=None):
+        X_df = pd.DataFrame(X)
+
+        self.lower_bounds_ = {}
+        self.upper_bounds_ = {}
+
+        for col in X_df.columns:
+
+            if self.method == 'iqr':
+
+                q25 = X_df[col].quantile(0.25)
+                q75 = X_df[col].quantile(0.75)
+
+                iqr = q75 - q25
+
+                self.lower_bounds_[col] = (
+                    q25 - self.factor * iqr
+                )
+
+                self.upper_bounds_[col] = (
+                    q75 + self.factor * iqr
+                )
+
+            elif self.method == 'zscore':
+
+                mean = X_df[col].mean()
+                std = X_df[col].std()
+
+                self.lower_bounds_[col] = (
+                    mean - self.factor * std
+                )
+
+                self.upper_bounds_[col] = (
+                    mean + self.factor * std
+                )
+
         return self
 
     def transform(self, X):
+
         X_df = pd.DataFrame(X).copy()
 
-        for col, (lower_limit, upper_limit) in self.bounds_.items():
-            if col in X_df.columns:
+        for col in X_df.columns:
+
+            if col in self.lower_bounds_:
+
                 X_df[col] = np.clip(
                     X_df[col],
-                    lower_limit,
-                    upper_limit
+                    self.lower_bounds_[col],
+                    self.upper_bounds_[col]
                 )
 
         return X_df.values
-OutlierCapper = SelectiveOutlierCapper
-setattr(
-    sys.modules['__main__'],
-    'SelectiveOutlierCapper',
-    SelectiveOutlierCapper
-)
+
 setattr(
     sys.modules['__main__'],
     'OutlierCapper',
