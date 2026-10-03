@@ -6,7 +6,6 @@ from pathlib import Path
 from sklearn.base import BaseEstimator, TransformerMixin
 import sys
 
-
 class SelectiveOutlierCapper(BaseEstimator, TransformerMixin):
     def __init__(self, factor=1.5, target_columns=None):
         self.factor = factor
@@ -18,29 +17,73 @@ class SelectiveOutlierCapper(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         X_df = pd.DataFrame(X).copy()
+
         for col, (lower_limit, upper_limit) in self.bounds_.items():
             if col in X_df.columns:
-                X_df[col] = np.clip(X_df[col], lower_limit, upper_limit)
+                X_df[col] = np.clip(
+                    X_df[col],
+                    lower_limit,
+                    upper_limit
+                )
+
         return X_df.values
-
-
 OutlierCapper = SelectiveOutlierCapper
-
-# Bind explicitly to __main__ so pickle find_class can always locate it
-setattr(sys.modules['__main__'], 'SelectiveOutlierCapper', SelectiveOutlierCapper)
-setattr(sys.modules['__main__'], 'OutlierCapper', OutlierCapper)
-
-
-# 2. LOAD MODEL PIPELINE
+setattr(
+    sys.modules['__main__'],
+    'SelectiveOutlierCapper',
+    SelectiveOutlierCapper
+)
+setattr(
+    sys.modules['__main__'],
+    'OutlierCapper',
+    OutlierCapper
+)
 
 @st.cache_resource
 def load_pipeline():
     model_path = Path(__file__).parent / "house_price_champion_pipeline.pkl"
+
     if not model_path.exists():
         model_path = Path.cwd() / "house_price_champion_pipeline.pkl"
-    return joblib.load(model_path)
 
+    return joblib.load(model_path)
 model = load_pipeline()
+
+
+# class SelectiveOutlierCapper(BaseEstimator, TransformerMixin):
+#     def __init__(self, factor=1.5, target_columns=None):
+#         self.factor = factor
+#         self.target_columns = target_columns
+#         self.bounds_ = {}
+
+#     def fit(self, X, y=None):
+#         return self
+
+#     def transform(self, X):
+#         X_df = pd.DataFrame(X).copy()
+#         for col, (lower_limit, upper_limit) in self.bounds_.items():
+#             if col in X_df.columns:
+#                 X_df[col] = np.clip(X_df[col], lower_limit, upper_limit)
+#         return X_df.values
+
+
+# OutlierCapper = SelectiveOutlierCapper
+
+# # Bind explicitly to __main__ so pickle find_class can always locate it
+# setattr(sys.modules['__main__'], 'SelectiveOutlierCapper', SelectiveOutlierCapper)
+# setattr(sys.modules['__main__'], 'OutlierCapper', OutlierCapper)
+
+
+# # 2. LOAD MODEL PIPELINE
+
+# @st.cache_resource
+# def load_pipeline():
+#     model_path = Path(__file__).parent / "house_price_champion_pipeline.pkl"
+#     if not model_path.exists():
+#         model_path = Path.cwd() / "house_price_champion_pipeline.pkl"
+#     return joblib.load(model_path)
+
+# model = load_pipeline()
 
 
 # ==============================================================================
