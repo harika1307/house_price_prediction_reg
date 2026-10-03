@@ -96,7 +96,7 @@ st.write("Enter the property details below to estimate the market value.")
 
 st.subheader("Property Details")
 
-col1, col2 = st.subplots(2)
+col1, col2 = st.columns(2)
 
 with col1:
     MSSubClass = st.selectbox(
