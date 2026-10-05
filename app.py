@@ -10,10 +10,10 @@ st.set_page_config(page_title="House Price Predictor", page_icon="🏡", layout=
 
 @st.cache_resource
 def load_pipeline():
-    model_path = Path(__file__).parent / "house_price_champion_pipeline.pkl"
+    model_path = Path(__file__).parent / "model.pkl"
 
     if not model_path.exists():
-        model_path = Path.cwd() / "house_price_champion_pipeline.pkl"
+        model_path = Path.cwd() / "model.pkl"
 
     return joblib.load(model_path)
 model = load_pipeline()
@@ -41,7 +41,7 @@ with col1:
         index=5 # default to 60
     )
     LotArea = st.number_input("Lot Area (sq ft)", min_value=100, max_value=300000, value=8500, step=100)
-    OverallCond = st.slider("Overall Condition (1-10)", min_value=1, max_value=10, value=5)
+    OverallCond = st.number_input("Overall Condition Rating", min_value=0, max_value=9, value=5, step=1)
     YearBuilt = st.number_input("Year Built", min_value=1850, max_value=2026, value=2000)
     YearRemodAdd = st.number_input("Year Remodeled / Added", min_value=1850, max_value=2026, value=2005)
 
